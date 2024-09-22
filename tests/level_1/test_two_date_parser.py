@@ -4,52 +4,87 @@ from datetime import datetime, date, time, timedelta
 from functions.level_1.two_date_parser import compose_datetime_from
 
 
-@pytest.mark.parametrize('date_str, time_str, answer',
+def factory_for_creating_dates_today(date_str: str, time_str: str):
+    date_today = date.today()
+    time_created = datetime.strptime(time_str, '%H:%M').time()
+    created_datetime = datetime.combine(date_today, time_created)
+    if date_str == 'tomorrow':
+        created_datetime += timedelta(days=1)
+    return created_datetime
+
+
+@pytest.mark.parametrize('time_str',
                          [
-                             ('today', '15:30', datetime.combine(date.today(), time(hour=15, minute=30))),
-                             ('today', '00:00', datetime.combine(date.today(), time(hour=0, minute=0))),
-                             ('', '23:59', datetime.combine(date.today(), time(hour=23, minute=59))),
-                             ('tomorrow', '09:15', datetime.combine(date.today() + timedelta(days=1), time(hour=9, minute=15))),
+                             ('09:15'),
+                             ('00:00'),
+                             ('00:01'),
+                             ('23:59'),
                          ])
-def test_compose_datetime_from(date_str, time_str, answer):
-    assert compose_datetime_from(date_str, time_str) == answer
+def test__compose_datetime_from__date_tomorrow(time_str):
+    reference_datetime = factory_for_creating_dates_today('tomorrow', time_str)
+    
+    result = compose_datetime_from('tomorrow', time_str)
+    
+    assert result == reference_datetime
+    
+
+@pytest.mark.parametrize('date_str', 
+                         [
+                             ('today'),
+                             (''),
+                             ('1234'),
+                             ('   '),
+                             ('any string'),
+                         ])
+def test__compose_datetime_from__date_today(date_str):
+    reference_datetime = factory_for_creating_dates_today(date_str, '15:31')
+    
+    result = compose_datetime_from(date_str, '15:31')
+    
+    assert result == reference_datetime
+    
+
+@pytest.mark.parametrize('time_str',
+                         [
+                             ('09:15'),
+                             ('15:15'),
+                             ('00:00'),
+                             ('00:01'),
+                             ('23:59'),
+                         ])
+def test__compose_datetime_from__for_the_correct_time(time_str):
+    reference_datetime = factory_for_creating_dates_today('today', time_str)
+    
+    result = compose_datetime_from('today', time_str)
+    
+    assert result == reference_datetime
+    
+
 
 
 @pytest.mark.parametrize('date_str, time_str',
                          [
                              ('today', '24:00'),
                              ('today', '23:60'),
-                             ('today', '-23:15'),
-                             ('today', '23:234'),
-
+                             ('tomorrow', '23:60'),
+                             ('tomorrow', '24:00'),
                          ])
-def test_exception_out_of_range_time(date_str, time_str):
+def test__compose_datetime_from__exception_out_of_range_time(date_str, time_str):
     with pytest.raises(ValueError):
         compose_datetime_from(date_str, time_str)
 
 
-@pytest.mark.parametrize('date_str, time_str',
+@pytest.mark.parametrize('time_str',
                          [
-                             ('today', '13:00:30'),
-                             ('today', '23.30'),
-                             ('today', '23-234'),
-                             ('today', '23'),
-                             ('today', 'a:10'),
-                             ('today', ''),
+                             ('13:00:30'),
+                             ('23.30'),
+                             ('23-23'),
+                             ('23'),
+                             ('a:10'),
+                             (''),
+                             ('2347023'),
 
                          ])
-def test_exception_unpack(date_str, time_str):
+def test__compose_datetime_from__invalid_time_format(time_str):
     with pytest.raises(ValueError):
-        compose_datetime_from(date_str, time_str)
-
-
-@pytest.mark.parametrize('date_str, time_str',
-                         [
-                             ('today', [1,3,4]),
-                             ('today', set('adsfge')),
-                             ('today', 145),
-                         ])
-def test_exception_no_attribute(date_str, time_str):
-    with pytest.raises(AttributeError):
-        compose_datetime_from(date_str, time_str)
-
+        compose_datetime_from('today', time_str)

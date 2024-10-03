@@ -31,4 +31,3 @@ def test__change_copy_item__adds_copy_number_when_title_begins_copy_text_and_has
     
 def test__change_copy_item__adds_copy_number_when_title_begins_copy_text_and_has_negative_number_in_brackets():
     change_copy_item('Copy of Текст (-1)') == 'Copy of Текст (-1) (2)'
-    
